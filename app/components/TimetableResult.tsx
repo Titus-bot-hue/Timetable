@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 interface ExamEntry {
   unit: string;
@@ -14,7 +15,10 @@ interface Props {
 }
 
 export default function TimetableResult({ found, notFound, onGeneratePDF }: Props) {
+  const [showDownload, setShowDownload] = useState(false);
+
   function downloadCSV() {
+    setShowDownload(false);
     const header = "Unit,Date,Time,Venue\n";
     const rows = found.map(e => `"${e.unit}","${e.date}","${e.time}","${e.venue}"`).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
@@ -24,6 +28,11 @@ export default function TimetableResult({ found, notFound, onGeneratePDF }: Prop
     a.download = "my_exam_timetable.csv";
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function handlePDF() {
+    setShowDownload(false);
+    onGeneratePDF();
   }
 
   if (found.length === 0) {
@@ -51,8 +60,40 @@ export default function TimetableResult({ found, notFound, onGeneratePDF }: Prop
           </p>
         </div>
         <div className="results-actions">
-          <button className="btn btn-success" onClick={onGeneratePDF}>🖨️ PDF</button>
-          <button className="btn btn-outline" onClick={downloadCSV}>⬇️ CSV</button>
+          <div style={{ position: "relative" }}>
+            <button
+              className="btn btn-success"
+              onClick={() => setShowDownload(v => !v)}
+            >
+              ⬇️ Download ▾
+            </button>
+            {showDownload && (
+              <div style={{
+                position: "absolute", right: 0, top: "calc(100% + 6px)",
+                background: "#fff", border: "2px solid #e2e8f0",
+                borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                minWidth: "160px", zIndex: 100, overflow: "hidden",
+              }}>
+                <button onClick={handlePDF} style={{
+                  display: "flex", alignItems: "center", gap: "0.6rem",
+                  width: "100%", padding: "0.75rem 1rem",
+                  background: "none", border: "none", cursor: "pointer",
+                  fontSize: "0.875rem", fontWeight: 600, color: "#2d3748",
+                  borderBottom: "1px solid #e2e8f0",
+                }}>
+                  🖨️ Download PDF
+                </button>
+                <button onClick={downloadCSV} style={{
+                  display: "flex", alignItems: "center", gap: "0.6rem",
+                  width: "100%", padding: "0.75rem 1rem",
+                  background: "none", border: "none", cursor: "pointer",
+                  fontSize: "0.875rem", fontWeight: 600, color: "#2d3748",
+                }}>
+                  📄 Download CSV
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

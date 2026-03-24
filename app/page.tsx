@@ -109,6 +109,7 @@ export default function Home() {
   const [showNoFileToast, setShowNoFileToast] = useState(false);
   const [notFoundModal, setNotFoundModal] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   // ── File handling ──────────────────────────────────────────────────────────
   function handleFile(f: File) {
@@ -172,6 +173,8 @@ export default function Home() {
       const data = await res.json();
       setResult(data);
       if (data.notFound?.length > 0) setNotFoundModal(data.notFound);
+      // Auto-scroll to results
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Extraction failed. Please try again.");
     } finally {
@@ -325,11 +328,13 @@ export default function Home() {
       )}
 
       {result && !loading && (
-        <TimetableResult
-          found={result.found}
-          notFound={result.notFound}
-          onGeneratePDF={generatePDF}
-        />
+        <div ref={resultRef}>
+          <TimetableResult
+            found={result.found}
+            notFound={result.notFound}
+            onGeneratePDF={generatePDF}
+          />
+        </div>
       )}
 
       {/* Footer */}

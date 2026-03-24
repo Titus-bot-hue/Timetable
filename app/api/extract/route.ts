@@ -215,19 +215,38 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Parse date strings into timestamps for correct chronological sorting
   function parseDate(d: string): number {
-    // Try DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
+    // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
     const dmy = d.match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
     if (dmy) {
-      const day = parseInt(dmy[1]), month = parseInt(dmy[2]) - 1;
+      const day = parseInt(dmy[1]);
+      const month = parseInt(dmy[2]) - 1;
       const year = dmy[3].length === 2 ? 2000 + parseInt(dmy[3]) : parseInt(dmy[3]);
-      return new Date(year, month, day).getTime();
+      return Date.UTC(year, month, day);
     }
-    // Try YYYY-MM-DD
+    // YYYY-MM-DD
     const ymd = d.match(/(\d{4})[\-.](\d{2})[\-.](\d{2})/);
-    if (ymd) return new Date(parseInt(ymd[1]), parseInt(ymd[2]) - 1, parseInt(ymd[3])).getTime();
-    // Fallback: let JS try
-    const t = Date.parse(d);
-    return isNaN(t) ? 0 : t;
+    if (ymd) return Date.UTC(parseInt(ymd[1]), parseInt(ymd[2]) - 1, parseInt(ymd[3]));
+    // "Monday, 14 April 2026" or "14 April 2026" or "April 14, 2026"
+    const months: Record<string, number> = {
+      jan:0,feb:1,mar:2,apr:3,may:4,jun:5,
+      jul:6,aug:7,sep:8,oct:9,nov:10,dec:11
+    };
+    const lower = d.toLowerCase();
+    // find month name
+    let monthIdx = -1;
+    for (const [key, val] of Object.entries(months)) {
+      if (lower.includes(key)) { monthIdx = val; break; }
+    }
+    if (monthIdx !== -1) {
+      const nums = d.match(/\d+/g) ?? [];
+      // year is 4-digit, day is 1-2 digit
+      const year4 = nums.find(n => n.length === 4);
+      const day2 = nums.find(n => n.length <= 2);
+      if (year4 && day2) {
+        return Date.UTC(parseInt(year4), monthIdx, parseInt(day2));
+      }
+    }
+    return 0;
   }
 
   found.sort((a, b) => {
