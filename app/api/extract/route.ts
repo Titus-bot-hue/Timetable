@@ -40,6 +40,31 @@ function extractUnitCode(raw: string): string | null {
   return m ? m[0] : null;
 }
 
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const MONTHS_FULL = ["January","February","March","April","May","June",
+  "July","August","September","October","November","December"];
+
+// Convert any date string to "Thursday, 16 April 2026" using UTC
+function formatDateNice(raw: string): string {
+  // Already nicely formatted
+  if (/[a-zA-Z].*\d{4}/.test(raw) && raw.includes(",")) return raw;
+  // Parse DD/MM/YYYY
+  const dmy = raw.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+  if (dmy) {
+    const d = parseInt(dmy[1]), mo = parseInt(dmy[2]) - 1, y = parseInt(dmy[3]);
+    const date = new Date(Date.UTC(y, mo, d));
+    return `${DAYS[date.getUTCDay()]}, ${d} ${MONTHS_FULL[mo]} ${y}`;
+  }
+  // Parse YYYY-MM-DD
+  const ymd = raw.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) {
+    const y = parseInt(ymd[1]), mo = parseInt(ymd[2]) - 1, d = parseInt(ymd[3]);
+    const date = new Date(Date.UTC(y, mo, d));
+    return `${DAYS[date.getUTCDay()]}, ${d} ${MONTHS_FULL[mo]} ${y}`;
+  }
+  return raw;
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
@@ -213,7 +238,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
 
       foundUnits.add(unitCode);
-      found.push({ unit: unitCode, date: date || "—", time: time || "—", venue: venue || "—" });
+      found.push({ unit: unitCode, date: formatDateNice(date || "—"), time: time || "—", venue: venue || "—" });
     }
   }
 
@@ -232,7 +257,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // YYYY-MM-DD
     const ymd = d.match(/(\d{4})[\-.](\d{2})[\-.](\d{2})/);
     if (ymd) return Date.UTC(parseInt(ymd[1]), parseInt(ymd[2]) - 1, parseInt(ymd[3]));
-    // "Monday, 14 April 2026" or "14 April 2026" or "April 14 2026"
+    // "Thursday, 16 April 2026" or "16 April 2026"
     const MONTHS = [
       "january","february","march","april","may","june",
       "july","august","september","october","november","december"
@@ -246,9 +271,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const nums = d.match(/\d+/g) ?? [];
       const year4 = nums.find(n => n.length === 4);
       const day2 = nums.find(n => parseInt(n) <= 31 && n.length <= 2);
-      if (year4 && day2) {
-        return Date.UTC(parseInt(year4), monthIdx, parseInt(day2));
-      }
+      if (year4 && day2) return Date.UTC(parseInt(year4), monthIdx, parseInt(day2));
     }
     return 0;
   }

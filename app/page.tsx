@@ -196,7 +196,7 @@ export default function Home() {
     doc.setTextColor(99, 102, 241);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("My Exam Timetable", 105, 20, { align: "center" });
+    doc.text("Exam Timetable", 105, 20, { align: "center" });
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
@@ -229,7 +229,7 @@ export default function Home() {
       doc.text(`Not found: ${result.notFound.join(", ")}`, 14, finalY);
     }
 
-    doc.save("my_exam_timetable.pdf");
+    doc.save("exam_timetable.pdf");
   }
 
   const canExtract = !loading;
