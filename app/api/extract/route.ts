@@ -17,7 +17,13 @@ function normalizeUnit(u: string) {
 function cellVal(row: ExcelJS.Row, col: number): string {
   const cell = row.getCell(col); // 1-based in exceljs
   if (!cell || cell.value === null || cell.value === undefined) return "";
-  if (cell.value instanceof Date) return cell.value.toLocaleDateString();
+  if (cell.value instanceof Date) {
+    const d = cell.value;
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(d.getUTCDate()).padStart(2, "0");
+    return `${dd}/${mm}/${yyyy}`;
+  }
   // Rich text
   if (typeof cell.value === "object" && "richText" in (cell.value as object)) {
     const rt = (cell.value as { richText: { text: string }[] }).richText;
