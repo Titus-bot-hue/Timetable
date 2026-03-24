@@ -226,22 +226,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // YYYY-MM-DD
     const ymd = d.match(/(\d{4})[\-.](\d{2})[\-.](\d{2})/);
     if (ymd) return Date.UTC(parseInt(ymd[1]), parseInt(ymd[2]) - 1, parseInt(ymd[3]));
-    // "Monday, 14 April 2026" or "14 April 2026" or "April 14, 2026"
-    const months: Record<string, number> = {
-      jan:0,feb:1,mar:2,apr:3,may:4,jun:5,
-      jul:6,aug:7,sep:8,oct:9,nov:10,dec:11
-    };
+    // "Monday, 14 April 2026" or "14 April 2026" or "April 14 2026"
+    const MONTHS = [
+      "january","february","march","april","may","june",
+      "july","august","september","october","november","december"
+    ];
     const lower = d.toLowerCase();
-    // find month name
     let monthIdx = -1;
-    for (const [key, val] of Object.entries(months)) {
-      if (lower.includes(key)) { monthIdx = val; break; }
+    for (let m = 0; m < MONTHS.length; m++) {
+      if (lower.includes(MONTHS[m].slice(0, 3))) { monthIdx = m; break; }
     }
     if (monthIdx !== -1) {
       const nums = d.match(/\d+/g) ?? [];
-      // year is 4-digit, day is 1-2 digit
       const year4 = nums.find(n => n.length === 4);
-      const day2 = nums.find(n => n.length <= 2);
+      const day2 = nums.find(n => parseInt(n) <= 31 && n.length <= 2);
       if (year4 && day2) {
         return Date.UTC(parseInt(year4), monthIdx, parseInt(day2));
       }
