@@ -3,6 +3,7 @@ import { useState } from "react";
 
 interface ExamEntry {
   unit: string;
+  unitName: string;
   date: string;
   time: string;
   venue: string;
@@ -120,6 +121,11 @@ export default function TimetableResult({ found, notFound, onGeneratePDF }: Prop
                     <td className="doc-td-cell" style={{ whiteSpace: "nowrap", fontWeight: 600, color: "#2d3748" }}>{e.time}</td>
                     <td className="doc-td-cell">
                       <span className="doc-entry-unit">{e.unit}</span>
+                      {e.unitName && (
+                        <div style={{ fontSize: "0.72rem", color: "#718096", marginTop: "0.2rem", fontWeight: 500 }}>
+                          {e.unitName}
+                        </div>
+                      )}
                     </td>
                     <td className="doc-td-cell" style={{ color: "#4a5568", fontWeight: 500 }}>{e.venue}</td>
                   </tr>

@@ -4,6 +4,7 @@ import TimetableResult from "./components/TimetableResult";
 
 interface ExamEntry {
   unit: string;
+  unitName: string;
   date: string;
   time: string;
   venue: string;
@@ -205,26 +206,60 @@ export default function Home() {
     autoTable(doc, {
       startY: 36,
       head: [["Date", "Time", "Unit Code", "Venue"]],
-      body: result.found.map(e => [e.date, e.time, e.unit, e.venue]),
+      body: result.found.map(e => [e.date, e.time, "", e.venue]),
       theme: "grid",
       styles: {
         fillColor: [30, 41, 59],
         textColor: [226, 232, 240],
         lineColor: [51, 65, 85],
         fontSize: 9,
-        cellPadding: 5,
+        cellPadding: 3,
+        valign: "middle",
+        minCellHeight: 18,
       },
       headStyles: {
         fillColor: [99, 102, 241],
         textColor: [255, 255, 255],
         fontStyle: "bold",
+        fontSize: 9,
+        cellPadding: 4,
       },
       alternateRowStyles: { fillColor: [15, 23, 42] },
       columnStyles: {
-        0: { cellWidth: 60 },
-        1: { cellWidth: 42 },
-        2: { cellWidth: 28, fontStyle: "bold" },
+        0: { cellWidth: 58 },
+        1: { cellWidth: 38 },
+        2: { cellWidth: 50, halign: "center" },
         3: { cellWidth: "auto" },
+      },
+      didDrawCell: (data) => {
+        if (data.section === "body" && data.column.index === 2) {
+          const entry = result.found[data.row.index];
+          if (!entry?.unitName) return;
+          const { x, y, width, height } = data.cell;
+          // Clear and redraw cell background
+          doc.setFillColor(
+            data.row.index % 2 === 0 ? 30 : 15,
+            data.row.index % 2 === 0 ? 41 : 23,
+            data.row.index % 2 === 0 ? 59 : 42
+          );
+          doc.rect(x, y, width, height, "F");
+          const pad = 3;
+          const usableW = width - pad * 2;
+          // Unit code — bold white, centered
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(226, 232, 240);
+          doc.text(entry.unit, x + width / 2, y + pad + 5, { align: "center" });
+          // Unit name — wrapped, smaller, muted
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7);
+          doc.setTextColor(148, 163, 184);
+          const lines = doc.splitTextToSize(entry.unitName, usableW) as string[];
+          const lineH = 3.5;
+          lines.slice(0, 3).forEach((line: string, i: number) => {
+            doc.text(line, x + width / 2, y + pad + 10 + i * lineH, { align: "center" });
+          });
+        }
       },
     });
 

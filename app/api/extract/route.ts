@@ -5,6 +5,7 @@ export const runtime = "nodejs";
 
 interface ExamEntry {
   unit: string;
+  unitName: string;
   date: string;
   time: string;
   venue: string;
@@ -38,6 +39,13 @@ function cellVal(row: ExcelJS.Row, col: number): string {
 function extractUnitCode(raw: string): string | null {
   const m = raw.match(/[A-Z]{3}\s\d{3}/);
   return m ? m[0] : null;
+}
+
+// Extract unit name — text after the unit code, stripped of leading dashes/spaces
+function extractUnitName(raw: string): string {
+  const m = raw.match(/[A-Za-z]{3}\s\d{3}\s*[-–—]?\s*(.+)/);
+  if (m && m[1]) return m[1].trim();
+  return "";
 }
 
 const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -238,7 +246,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
 
       foundUnits.add(unitCode);
-      found.push({ unit: unitCode, date: formatDateNice(date || "—"), time: time || "—", venue: venue || "—" });
+      found.push({ unit: unitCode, unitName: extractUnitName(val), date: formatDateNice(date || "—"), time: time || "—", venue: venue || "—" });
     }
   }
 
