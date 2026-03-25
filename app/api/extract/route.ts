@@ -252,6 +252,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const notFound = units.filter(u => !foundUnits.has(u));
 
+  // Deduplicate: same unit+date+time = one entry
+  const seen = new Set<string>();
+  const deduped = found.filter(e => {
+    const key = `${e.unit}|${e.date}|${e.time}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
   // Parse date strings into timestamps for correct chronological sorting
   function parseDate(d: string): number {
     // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
@@ -284,11 +293,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return 0;
   }
 
-  found.sort((a, b) => {
+  // Parse time string to minutes since midnight for correct ordering
+  function parseTime(t: string): number {
+    const lower = t.toLowerCase().replace(/\s/g, "");
+    // Extract first time part e.g. "8.30am", "12.00noon", "3.30pm"
+    const m = lower.match(/(\d{1,2})[.:]?(\d{2})?(am|pm|noon|midnight)?/);
+    if (!m) return 0;
+    let h = parseInt(m[1]);
+    const min = parseInt(m[2] ?? "0");
+    const period = m[3] ?? "";
+    if (period === "noon" || lower.includes("noon")) return 12 * 60 + min;
+    if (period === "midnight") return 0;
+    if (period === "pm" && h !== 12) h += 12;
+    if (period === "am" && h === 12) h = 0;
+    // No am/pm: treat < 7 as pm (e.g. "3.30" = 3:30pm)
+    if (!period && h < 7) h += 12;
+    return h * 60 + min;
+  }
+
+  deduped.sort((a, b) => {
     const dateDiff = parseDate(a.date) - parseDate(b.date);
     if (dateDiff !== 0) return dateDiff;
-    return a.time.localeCompare(b.time);
+    return parseTime(a.time) - parseTime(b.time);
   });
 
-  return NextResponse.json({ found, notFound });
+  return NextResponse.json({ found: deduped, notFound });
 }

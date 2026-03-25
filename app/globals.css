@@ -684,3 +684,8 @@ body {
   .doc-th, .doc-td-date, .doc-td-cell { padding: 0.5rem 0.5rem; }
   .doc-entry { min-width: 80px; }
 }
+
+/* rowspan date cell vertical alignment */
+.doc-td-date {
+  vertical-align: middle !important;
+}

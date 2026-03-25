@@ -115,21 +115,42 @@ export default function TimetableResult({ found, notFound, onGeneratePDF }: Prop
                 </tr>
               </thead>
               <tbody>
-                {found.map((e, i) => (
-                  <tr key={i} className={i % 2 === 0 ? "doc-tr-even" : "doc-tr-odd"}>
-                    <td className="doc-td-date">{e.date}</td>
-                    <td className="doc-td-cell" style={{ whiteSpace: "nowrap", fontWeight: 600, color: "#2d3748" }}>{e.time}</td>
-                    <td className="doc-td-cell">
-                      <span className="doc-entry-unit">{e.unit}</span>
-                      {e.unitName && (
-                        <div style={{ fontSize: "0.72rem", color: "#718096", marginTop: "0.2rem", fontWeight: 500 }}>
-                          {e.unitName}
-                        </div>
-                      )}
-                    </td>
-                    <td className="doc-td-cell" style={{ color: "#4a5568", fontWeight: 500 }}>{e.venue}</td>
-                  </tr>
-                ))}
+                {(() => {
+                  // Group by date
+                  const groups: { date: string; exams: typeof found }[] = [];
+                  for (const e of found) {
+                    const last = groups[groups.length - 1];
+                    if (last && last.date === e.date) last.exams.push(e);
+                    else groups.push({ date: e.date, exams: [e] });
+                  }
+                  let rowIdx = 0;
+                  return groups.map((g) => (
+                    g.exams.map((e, ei) => {
+                      const isFirst = ei === 0;
+                      const bg = rowIdx % 2 === 0 ? "doc-tr-even" : "doc-tr-odd";
+                      if (ei === g.exams.length - 1) rowIdx++;
+                      return (
+                        <tr key={`${g.date}-${ei}`} className={bg}>
+                          {isFirst && (
+                            <td className="doc-td-date" rowSpan={g.exams.length}>
+                              {g.date}
+                            </td>
+                          )}
+                          <td className="doc-td-cell" style={{ whiteSpace: "nowrap", fontWeight: 600, color: "#2d3748" }}>{e.time}</td>
+                          <td className="doc-td-cell">
+                            <span className="doc-entry-unit">{e.unit}</span>
+                            {e.unitName && (
+                              <div style={{ fontSize: "0.72rem", color: "#718096", marginTop: "0.2rem", fontWeight: 500 }}>
+                                {e.unitName}
+                              </div>
+                            )}
+                          </td>
+                          <td className="doc-td-cell" style={{ color: "#4a5568", fontWeight: 500 }}>{e.venue}</td>
+                        </tr>
+                      );
+                    })
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
